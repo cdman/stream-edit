@@ -1,9 +1,11 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.imageio.ImageIO;
+import net.sf.image4j.codec.bmp.BMPDecoder;
+import net.sf.image4j.codec.bmp.BMPEncoder;
 
 public final class Main {
 	private static void drawSmileyFace(Graphics g) {
@@ -22,33 +24,29 @@ public final class Main {
 
 	public static void main(String[] args) throws Exception {
 		String input = args[0];
-		String output = args[1];
 
-		Process inputProcess = new ProcessBuilder("/usr/bin/ffmpeg", "-loglevel", "error", "-i", input, "-c:v", "png",
-				"-f", "image2pipe", "-").start();
+		Process inputProcess = new ProcessBuilder("/usr/bin/ffmpeg", "-loglevel", "error", "-i", input, "-c:v", "bmp",
+				"-pix_fmt", "rgb24", "-f", "image2pipe", "-r", "10", "-").start();
 		new StreamLogger(inputProcess.getErrorStream(), "input");
 
-		Process outputProcess = new ProcessBuilder("/usr/bin/ffmpeg", "-loglevel", "error", "-y", "-f", "image2pipe",
-				"-i", "-", "-r", "23.98", "-c:v", "libx264", "-crf", "18", output).start();
-//		Process outputProcess = new ProcessBuilder("/bin/sed", "-n", "w " + output).start();
+		Process outputProcess = new ProcessBuilder("/usr/bin/ffmpeg", "-loglevel", "error", "-i", "-", "-r", "10",
+				"http://localhost:8090/feed1.ffm").start();
 		new StreamLogger(outputProcess.getErrorStream(), "output");
 
-		ImageExtractor imageExtractor = new ImageExtractor(inputProcess.getInputStream());
-		OutputStream outputStream = outputProcess.getOutputStream();
-		int frameCount = 0;
+		InputStream in = inputProcess.getInputStream();
+		OutputStream out = outputProcess.getOutputStream();
 		while (true) {
-			BufferedImage image = imageExtractor.next();
-			if (image == null) {
+			BufferedImage img;
+			try {
+				img = new BMPDecoder(in).getBufferedImage();
+			} catch (Exception e) {
 				break;
 			}
-			drawSmileyFace(image.getGraphics());
-			System.out.println("Frame " + frameCount);
-			frameCount++;
-//			ImageIO.write(image, "png", new java.io.File("/tmp/test.png"));
-			ImageIO.write(image, "png", outputStream);
+			drawSmileyFace(img.getGraphics());
+			BMPEncoder.write(img, out);
 		}
 
-		outputStream.close();
+		out.close();
 		inputProcess.waitFor();
 		outputProcess.waitFor();
 	}
