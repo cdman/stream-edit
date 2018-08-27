@@ -50,16 +50,6 @@
 		</plugins>
 	</build>
 	<dependencies>
-		<dependency>
-			<groupId>org.lucee</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.6.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jclarion</groupId>
-			<artifactId>image4j</artifactId>
-			<version>0.7</version>
-		</dependency>
 	</dependencies>
 </project>
 
