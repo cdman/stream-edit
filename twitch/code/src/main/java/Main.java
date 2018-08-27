@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -8,9 +9,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 public final class Main {
+	private static final Date DATE = new Date();
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss.SSS+XX");
+
 	private static void drawSmileyFace(Graphics g) {
+		DATE.setTime(System.currentTimeMillis());
+		g.drawString(DATE_FORMAT.format(DATE), 0, 20);
+
 		g.drawArc(100, 45, 80, 80, 0, 360);
 
 		g.setColor(Color.blue);
@@ -218,6 +229,7 @@ public final class Main {
 				}
 				imgBytes = bytes[0];
 				graphics = img.getGraphics();
+				graphics.setFont(new Font("Dialog", Font.PLAIN, 20));
 			} else {
 				long size = readUnsignedIntLE(in);
 				if ((size & 0x1L) == 1) {
@@ -232,6 +244,7 @@ public final class Main {
 
 	public static void main(String[] args) throws Exception {
 		String input = args[0];
+		DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		Process inputProcess = new ProcessBuilder("/usr/bin/ffmpeg", "-loglevel", "error", "-i", input, "-c:v",
 				"rawvideo", "-c:a", "copy", "-pix_fmt", "rgba", "-f", "avi", "-").start();
